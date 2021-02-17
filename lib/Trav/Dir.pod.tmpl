@@ -49,6 +49,10 @@ Traverse directory structure.
 
 Callback when file is found. Can be undefined.
 
+    &callback ($data, $file);
+
+Here $file is the full path of the file.
+
 =item maxsize
 
 Maximum file size to consider.
@@ -57,17 +61,25 @@ Maximum file size to consider.
 
 Minimum file size to consider.
 
+=item no_dir
+
+Don't include directories in the results.
+
 =item no_trav
 
-Regex to reject directories
+Regex to reject directories to traverse.
+
+=item preprocess
+
+Regex to preprocess a list of files.
 
 =item only
 
-Regex to accept only some files
+Regex to accept only files which match it.
 
 =item rejfile
 
-Regex to reject files
+Regex to reject files which don't match it.
 
 =back
 
@@ -76,6 +88,9 @@ Regex to reject files
 =over
 
 =item L<File::Find>
+
+This is a Perl version of the Unix "find" utility. It is part of the
+Perl core so is installed with Perl by default.
 
 =back
 

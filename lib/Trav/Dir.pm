@@ -41,6 +41,18 @@ sub new
 	$o->{callback} = $options{callback};
 	delete $options{callback};
     }
+    if ($options{no_dir}) {
+	$o->{no_dir} = $options{no_dir};
+	delete $options{no_dir};
+    }
+    if ($options{data}) {
+	$o->{data} = $options{data};
+	delete $options{data};
+    }
+    if ($options{preprocess}) {
+	$o->{preprocess} = $options{preprocess};
+	delete $options{preprocess};
+    }
     for my $k (keys %options) {
 	carp "Unknown option $k";
 	delete $options{$k};
@@ -58,6 +70,9 @@ sub find_files
     }
     my @files = readdir ($dh);
     closedir ($dh);
+    if ($o->{preprocess}) {
+	&{$o->{preprocess}} ($o->{data}, $dir, \@files);
+    }
     for my $file (@files) {
 	if ($file eq '.' || $file eq '..') {
 	    next;
@@ -72,6 +87,7 @@ sub find_files
 	if ($o->{verbose}) {
 	    print "$dir $file\n";
 	}
+	my $is_dir = 0;
 	if (-d $dfile) {
 	    if (! $o->{no_trav} || $dfile !~ $o->{no_trav}) {
 		if (-l $dfile) {
@@ -83,6 +99,10 @@ sub find_files
 		}
 		find_files ($o, $dfile, $f);
 	    }
+	    if ($o->{no_dir}) {
+		next;
+	    }
+	    $is_dir = 1;
 	}
 	if (-l $dfile) {
 	    # Skip symbolic links
@@ -91,7 +111,7 @@ sub find_files
 	    }
 	    next;
 	}
-	if ($o->{size}) {
+	if (! $is_dir && $o->{size}) {
 	    my $size = -s $dfile;
 	    if ($size > $o->{maxsize} || $size < $o->{minsize}) {
 		if ($o->{verbose}) {
@@ -105,17 +125,19 @@ sub find_files
 	#	print "$safe\n";
 
 	if (! $o->{only} || $file =~ $o->{only}) {
-	    $o->save ($f, $dfile);
+	    $o->save ($dfile, $f);
 	}
     }
 }
 
 sub save
 {
-    my ($o, $f, $dfile) = @_;
-    push @$f, $dfile;
+    my ($o, $dfile, $f) = @_;
+    if ($f) {
+	push @$f, $dfile;
+    }
     if ($o->{callback}) {
-	&{$o->{callback}} ($o, $dfile);
+	&{$o->{callback}} ($o->{data}, $dfile);
     }
 }
 

@@ -17,11 +17,11 @@ This method was added in version [% version %] of the module.
 
 =head1 NAME
 
-[% info.colon %] - abstract here.
+[% info.colon %] - Traverse directories
 
 =head1 SYNOPSIS
 
-    use [% info.colon %];
+[% example("synopsis") %]
 
 =head1 VERSION
 
@@ -31,6 +31,52 @@ corresponding to L<git commit [% commit.commit %]|[% info.repo
 
 =head1 DESCRIPTION
 
-=head1 FUNCTIONS
+Traverse directory structure.
+
+=head1 METHODS
+
+=head2 find_files
+
+    $o->find_files ($dir, \@files);
+
+=head2 new
+
+    my $o = Trav::Dir->new (%options);
+
+=over
+
+=item callback
+
+Callback when file is found. Can be undefined.
+
+=item maxsize
+
+Maximum file size to consider.
+
+=item minsize
+
+Minimum file size to consider.
+
+=item no_trav
+
+Regex to reject directories
+
+=item only
+
+Regex to accept only some files
+
+=item rejfile
+
+Regex to reject files
+
+=back
+
+=head1 SEE ALSO
+
+=over
+
+=item L<File::Find>
+
+=back
 
 [% INCLUDE "author" %]

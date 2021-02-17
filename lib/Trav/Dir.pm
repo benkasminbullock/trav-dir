@@ -4,12 +4,7 @@ use strict;
 use Carp;
 use utf8;
 require Exporter;
-our @ISA = qw(Exporter);
-our @EXPORT_OK = qw/find_files/;
-our %EXPORT_TAGS = (
-    all => \@EXPORT_OK,
-);
-our $VERSION = '0.01';
+our $VERSION = '0.00_01';
 
 sub new
 {
@@ -46,7 +41,7 @@ sub new
 	delete $options{callback};
     }
     for my $k (keys %options) {
-	warn "Unknown option $k";
+	carp "Unknown option $k";
 	delete $options{$k};
     }
     bless $o, $class;
@@ -102,9 +97,9 @@ sub find_files
 	    }
 	    next;
 	}
-	my $safe = $dfile;
-	$safe =~ s![^[:print:]]!XX!g;
-	print "$safe\n";
+#	my $safe = $dfile;
+#	$safe =~ s![^[:print:]]!XX!g;
+#	print "$safe\n";
 
 	if ($o->{only}) {
 	    if ($file =~ $o->{only}) {

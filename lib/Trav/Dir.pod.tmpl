@@ -90,17 +90,39 @@ Regex to reject files which don't match it.
 =item L<File::Find>
 
 This is a Perl version of the Unix "find" utility. It is part of the
-Perl core so is installed with Perl by default. Instead of passing
-variables to callbacks as subroutine arguments, it passes them using
-C<$_> and oddly-named pseudo-global variables like C<$File::Find::dir>
-and C<$File::Find::name>. Callbacks have no avenue for passing
-user-defined data, so one has to either use global variables or
-anonymous subroutine closures. The module's documentation also notes
-that it has given things the wrong name, within the documentation.
+Perl core so is installed with Perl by default. 
 
-Trav::Dir started out as basically a script I had written so that I
-didn't have to use File::Find again. After writing this module, I then
-went back and replaced the uses of File::Find with this, so there are
+File::Find was rejected from the Acme:: namespace for being too
+absurd.
+
+Instead of passing variables to callbacks as subroutine arguments, it
+passes them using C<$_> and oddly-named pseudo-global variables like
+C<$File::Find::dir> and C<$File::Find::name>. Callbacks have no avenue
+for passing user-defined data, so one has to either use global
+variables or anonymous subroutine closures. 
+
+The module's documentation also notes that it has given things the
+wrong name, within the documentation: "Note that despite its name, the
+wanted() function is a generic callback function, and does not tell
+File::Find if a file is "wanted" or not. In fact, its return value is
+ignored." Since the author of the documentation has chosen to give the
+subroutine the name "wanted", it is interesting that he or she notes
+that the name is completely incorrect.
+
+For added fun, File::Find's documentation has a section "WARNINGS", a
+section "CAVEAT" (a word which means "warning"), and then a section
+"BUGS AND CAVEATS", which contains the following: "Despite the name of
+the finddepth() function, both find() and finddepth() perform a
+depth-first search of the directory hierarchy". It seems unlikely that
+there is a person other than the author of this documentation who
+understands what on earth he or she was trying to convey by this
+statement.
+
+I have used File::Find to traverse directories, but found it
+exceedingly annoying, and ended up writing various scripts to traverse
+directory trees instead. I started this module from one of the scripts
+I had written a few years ago. After writing this module, I then went
+back and replaced all the uses of File::Find with this, so there are
 some similarities.
 
 =back

@@ -3,7 +3,6 @@ use warnings;
 use strict;
 use Carp;
 use utf8;
-require Exporter;
 our $VERSION = '0.00_01';
 
 sub new
@@ -26,11 +25,13 @@ sub new
     if ($options{minsize}) {
 	$o->{minsize} = $options{minsize};
 	delete $options{minsize};
+	$o->{size} = 1;
     }
     $o->{maxsize} = 'inf';
     if ($options{maxsize}) {
 	$o->{maxsize} = $options{maxsize};
 	delete $options{maxsize};
+	$o->{size} = 1;
     }
     if ($options{only}) {
 	$o->{only} = $options{only};
@@ -90,23 +91,20 @@ sub find_files
 	    }
 	    next;
 	}
-	my $size = -s $dfile;
-	if ($size > $o->{maxsize} || $size < $o->{minsize}) {
-	    if ($o->{verbose}) {
-		print "Skipping $file due to size $size > $o->{maxsize} or < $o->{minsize}\n";
+	if ($o->{size}) {
+	    my $size = -s $dfile;
+	    if ($size > $o->{maxsize} || $size < $o->{minsize}) {
+		if ($o->{verbose}) {
+		    print "Skipping $file due to size $size > $o->{maxsize} or < $o->{minsize}\n";
+		}
+		next;
 	    }
-	    next;
 	}
-#	my $safe = $dfile;
-#	$safe =~ s![^[:print:]]!XX!g;
-#	print "$safe\n";
+	#	my $safe = $dfile;
+	#	$safe =~ s![^[:print:]]!XX!g;
+	#	print "$safe\n";
 
-	if ($o->{only}) {
-	    if ($file =~ $o->{only}) {
-		$o->save ($f, $dfile);
-	    }
-	}
-	else {
+	if (! $o->{only} || $file =~ $o->{only}) {
 	    $o->save ($f, $dfile);
 	}
     }

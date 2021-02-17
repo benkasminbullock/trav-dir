@@ -31,7 +31,7 @@ corresponding to L<git commit [% commit.commit %]|[% info.repo
 
 =head1 DESCRIPTION
 
-Traverse directory structure.
+Traverse directory structure. Replacement for L</File::Find>.
 
 =head1 METHODS
 
@@ -90,7 +90,18 @@ Regex to reject files which don't match it.
 =item L<File::Find>
 
 This is a Perl version of the Unix "find" utility. It is part of the
-Perl core so is installed with Perl by default.
+Perl core so is installed with Perl by default. Instead of passing
+variables to callbacks as subroutine arguments, it passes them using
+C<$_> and oddly-named pseudo-global variables like C<$File::Find::dir>
+and C<$File::Find::name>. Callbacks have no avenue for passing
+user-defined data, so one has to either use global variables or
+anonymous subroutine closures. The module's documentation also notes
+that it has given things the wrong name, within the documentation.
+
+Trav::Dir started out as basically a script I had written so that I
+didn't have to use File::Find again. After writing this module, I then
+went back and replaced the uses of File::Find with this, so there are
+some similarities.
 
 =back
 

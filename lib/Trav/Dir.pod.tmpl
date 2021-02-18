@@ -46,13 +46,20 @@ L</callback> instead. If both the callback and the files argument are
 omitted, C<find_files> prints a warning and returns, since there is
 nothing to do.
 
+Symbolic links (files which return a true value with the -l test) are
+always skipped.
+
 =head2 new
 
     my $o = Trav::Dir->new (%options);
 
+The options are as follows:
+
 =over
 
 =item callback
+
+    Trav::Dir->new (callback => \& call_me);
 
 Callback when file is found. Can be undefined. It is called like this
 
@@ -64,16 +71,22 @@ you don't want directories, use the L</no_dir> option.
 
 =item data
 
+    Trav::Dir->new (data => \%my_structure);
+
 A data item to pass to callbacks. See L</callback> and L</preprocess>
 for the calling conventions.
 
 =item maxsize
 
+    Trav::Dir->new (maxsize => 100_000_000);
+
 Maximum file size to consider. If left undefined it is not used. If
 defined, if the file under consideration is bigger than this, the file
-is skipped.
+is skipped. This test is not applied to directories.
 
 =item minsize
+
+    Trav::Dir->new (minsize => 100_000_000);
 
 Minimum file size to consider. If left undefined it is not used. If
 defined, if the file under consideration is smaller than this, the
@@ -81,16 +94,22 @@ file is skipped.
 
 =item no_dir
 
+    Trav::Dir->new (no_dir => 1);
+
 Don't include directories in the results sent to L</callback> or
 included in C<@files>.
 
 =item no_trav
+
+    Trav::Dir->new (no_trav => qr!\.git\b!);
 
 Regex to reject directories to traverse. If a directory matches this
 regex, it is not traversed at all, and its subdirectories are not
 traversed or even seen.
 
 =item only
+
+    Trav::Dir->new (only => qr!.*\.html$!);
 
 Regex to accept only files which match it. 
 
@@ -111,6 +130,8 @@ them when they are found with a callback named C<found>:
 
 =item preprocess
 
+    Trav::Dir->new (preprocess => \& my_function);
+
 A function which preprocesses a list of files. It is called in the form
 
      preprocess ($data, $dir, \@files);
@@ -120,6 +141,8 @@ directory of the files, and C<@files> is the list of files in that
 directory.
 
 =item rejfile
+
+    Trav::Dir->new (rejfile => qr!~$!);
 
 Regex to reject files which don't match it. If a file matches this
 regex it is never sent to the callback specified with L</callback>.
@@ -135,7 +158,8 @@ regex it is never sent to the callback specified with L</callback>.
 This is a Perl version of the Unix "find" utility. It is part of the
 Perl core so is installed with Perl by default. 
 
-Trav::Dir was created as an alternative to this with the following merits:
+Trav::Dir was created as an alternative to this with the following
+merits:
 
 =over
 
@@ -159,5 +183,10 @@ allowing regex arguments like L</no_trav>, L</only> and L</rejfile> to
 sort through directories and file names.
 
 =back
+
+File::Find also has various problems with its documentation, some of
+which I have reported to the Perl bug list. I also submitted a pull
+request to correct some of the worst problems. Please see there for
+details.
 
 [% INCLUDE "author" %]

@@ -40,11 +40,11 @@ Traverse directory structure. Replacement for L</File::Find>.
     $o->find_files ($dir, \@files);
 
 Traverse C<$dir> and its subdirectories and make a list of files. The
-found files are put into C<@files>. File names are fully
-qualified. You can omit the second argument if you want to use a
-L</callback> instead. If both the callback and the files argument are
-omitted, C<find_files> prints a warning and returns, since there is
-nothing to do.
+found files are put into C<@files>. File names are fully qualified,
+which means you get a file name including its directory. You can omit
+the second argument if you want to use a L</callback> instead. If both
+the callback and the files argument are omitted, C<find_files> prints
+a warning and returns, since there is nothing to do.
 
 Symbolic links (files which return a true value with the -l test) are
 always skipped.
@@ -66,8 +66,10 @@ Callback when file is found. Can be undefined. It is called like this
     &callback ($data, $file);
 
 Here C<$file> is the full path of the file and C<$data> is the data
-you pass with L</data>. Directories are also sent to your callback. If
-you don't want directories, use the L</no_dir> option.
+you pass with L</data>. 
+
+Directories are also sent to your callback. If you don't want
+directories, use the L</no_dir> option.
 
 =item data
 
@@ -140,6 +142,15 @@ where C<$data> is what is specified with L</data>, C<$dir> is the
 directory of the files, and C<@files> is the list of files in that
 directory.
 
+Trav::Dir does not call L<chdir> but C<@files> are not qualified.
+
+To alter what files are processed, alter the reference you get,
+e.g. to stop processing of the directory use
+
+    @$files = ();
+
+This may change in a future version of the module.
+
 =item rejfile
 
     Trav::Dir->new (rejfile => qr!~$!);
@@ -202,6 +213,11 @@ list. I've also submitted a pull request to correct some of the
 problems. Please see there for details if you would like to
 contribute.
 
+=item Does not call chdir
+
+Trav::Dir does not call chdir. All returned file names are
+fully-qualified.
+
 =back
 
 =item L<File::Find::Object>
@@ -211,6 +227,9 @@ contribute.
 "Alternative interface to File::Find"
 
 =item L<File::Finder>
+
+"nice wrapper for File::Find ala find" It writes C<wanted> subroutines
+for File::Find.
 
 =item L<File::Next>
 

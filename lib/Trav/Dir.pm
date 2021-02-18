@@ -63,6 +63,11 @@ sub new
 sub find_files
 {
     my ($o, $dir, $f) = @_;
+    if (! $f && ! $o->{callback}) {
+	# There is no work for us to do
+	carp "No file list and no callback";
+	return;
+    }
     my $dh;
     if (! opendir ($dh, $dir)) {
 	warn "opendir $dir failed: $!";

@@ -39,6 +39,13 @@ Traverse directory structure. Replacement for L</File::Find>.
 
     $o->find_files ($dir, \@files);
 
+Traverse C<$dir> and its subdirectories and make a list of files. The
+found files are put into C<@files>. File names are fully
+qualified. You can omit the second argument if you want to use a
+L</callback> instead. If both the callback and the files argument are
+omitted, C<find_files> prints a warning and returns, since there is
+nothing to do.
+
 =head2 new
 
     my $o = Trav::Dir->new (%options);
@@ -47,39 +54,75 @@ Traverse directory structure. Replacement for L</File::Find>.
 
 =item callback
 
-Callback when file is found. Can be undefined.
+Callback when file is found. Can be undefined. It is called like this
 
     &callback ($data, $file);
 
-Here $file is the full path of the file.
+Here C<$file> is the full path of the file and C<$data> is the data
+you pass with L</data>. Directories are also sent to your callback. If
+you don't want directories, use the L</no_dir> option.
+
+=item data
+
+A data item to pass to callbacks. See L</callback> and L</preprocess>
+for the calling conventions.
 
 =item maxsize
 
-Maximum file size to consider.
+Maximum file size to consider. If left undefined it is not used. If
+defined, if the file under consideration is bigger than this, the file
+is skipped.
 
 =item minsize
 
-Minimum file size to consider.
+Minimum file size to consider. If left undefined it is not used. If
+defined, if the file under consideration is smaller than this, the
+file is skipped.
 
 =item no_dir
 
-Don't include directories in the results.
+Don't include directories in the results sent to L</callback> or
+included in C<@files>.
 
 =item no_trav
 
-Regex to reject directories to traverse.
-
-=item preprocess
-
-Regex to preprocess a list of files.
+Regex to reject directories to traverse. If a directory matches this
+regex, it is not traversed at all, and its subdirectories are not
+traversed or even seen.
 
 =item only
 
-Regex to accept only files which match it.
+Regex to accept only files which match it. 
+
+For example the following script finds files called C<hanzierrorlog>
+under a directory C</mount/backup/incremental/2019>, and then removes
+them when they are found with a callback named C<found>:
+
+    my $td = Trav::Dir->new (
+        only => qr!hanzierrorlog!,
+        callback => \& found,
+    );
+    $td->find_files ('/mount/backup/incremental/2019');
+    sub found
+    {
+        my (undef, $file) = @_;
+        unlink $file or warn "Failed to unlink $file: $!";
+    }
+
+=item preprocess
+
+A function which preprocesses a list of files. It is called in the form
+
+     preprocess ($data, $dir, \@files);
+
+where C<$data> is what is specified with L</data>, C<$dir> is the
+directory of the files, and C<@files> is the list of files in that
+directory.
 
 =item rejfile
 
-Regex to reject files which don't match it.
+Regex to reject files which don't match it. If a file matches this
+regex it is never sent to the callback specified with L</callback>.
 
 =back
 
@@ -92,38 +135,29 @@ Regex to reject files which don't match it.
 This is a Perl version of the Unix "find" utility. It is part of the
 Perl core so is installed with Perl by default. 
 
-File::Find was rejected from the Acme:: namespace for being too
-absurd.
+Trav::Dir was created as an alternative to this with the following merits:
 
-Instead of passing variables to callbacks as subroutine arguments, it
-passes them using C<$_> and oddly-named pseudo-global variables like
-C<$File::Find::dir> and C<$File::Find::name>. Callbacks have no avenue
-for passing user-defined data, so one has to either use global
-variables or anonymous subroutine closures. 
+=over
 
-The module's documentation also notes that it has given things the
-wrong name, within the documentation: "Note that despite its name, the
-wanted() function is a generic callback function, and does not tell
-File::Find if a file is "wanted" or not. In fact, its return value is
-ignored." Since the author of the documentation has chosen to give the
-subroutine the name "wanted", it is interesting that he or she notes
-that the name is completely incorrect.
+=item No closures or global variables
 
-For added fun, File::Find's documentation has a section "WARNINGS", a
-section "CAVEAT" (a word which means "warning"), and then a section
-"BUGS AND CAVEATS", which contains the following: "Despite the name of
-the finddepth() function, both find() and finddepth() perform a
-depth-first search of the directory hierarchy". It seems unlikely that
-there is a person other than the author of this documentation who
-understands what on earth he or she was trying to convey by this
-statement.
+Trav::Dir eliminates
+the need for closures or global variables by allowing the user to
+supply a L</data> argument to L</new>. 
 
-I have used File::Find to traverse directories, but found it
-exceedingly annoying, and ended up writing various scripts to traverse
-directory trees instead. I started this module from one of the scripts
-I had written a few years ago. After writing this module, I then went
-back and replaced all the uses of File::Find with this, so there are
-some similarities.
+=item No pseudo-global variables
+
+File::Find requires the use of various pseudo-global variables like
+C<$File::Find::name>. Trav::Dir allows the use of standard Perl
+subroutines as callbacks. See L</callback> and L</preprocess>.
+
+=item Pattern-matching
+
+File::Find has no facility to match directories against patterns.
+Instead each and every directory and file must be handled by a user
+callback. Trav::Dir greatly simplifies the selection of files by
+allowing regex arguments like L</no_trav>, L</only> and L</rejfile> to
+sort through directories and file names.
 
 =back
 

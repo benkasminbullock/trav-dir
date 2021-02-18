@@ -90,7 +90,7 @@ is skipped. This test is not applied to directories.
 
 Minimum file size to consider. If left undefined it is not used. If
 defined, if the file under consideration is smaller than this, the
-file is skipped.
+file is skipped. This test is not applied to directories.
 
 =item no_dir
 
@@ -163,30 +163,45 @@ merits:
 
 =over
 
-=item No closures or global variables
+=item No need for closures or global variables
 
 Trav::Dir eliminates the need for closures or global variables by
 allowing the user to supply a L</data> argument to L</new>.
 
 =item No pseudo-global variables
 
-File::Find requires the use of various pseudo-global variables like
-C<$File::Find::name>. Trav::Dir allows the use of standard Perl
-subroutines as callbacks. See L</callback> and L</preprocess>.
+File::Find communicates with the user routine it calls C<wanted> using
+various pseudo-global variables like C<$File::Find::name>. Trav::Dir
+uses standard Perl subroutine arguments in callbacks. See L</callback>
+and L</preprocess>.
 
 =item Pattern-matching
 
-File::Find has no facility to match directories against patterns.
-Instead each and every directory and file must be handled by a user
-callback. Trav::Dir greatly simplifies the selection of files by
-allowing regex arguments like L</no_trav>, L</only> and L</rejfile> to
-sort through directories and file names.
+File::Find has no facility to match directories or files against
+patterns.  Instead each and every directory and file must be handled
+by a user callback, and the user callback must interact with
+File::Find using lengthy fully-qualified arguments like
+C<$File::Find::prune>.
+
+Trav::Dir greatly simplifies the selection of files by allowing regex
+arguments like L</no_trav>, L</only> and L</rejfile> to sort through
+directories and file names.
+
+=item Documentation
+
+File::Find has various more or less serious problems with its
+documentation, including wrong statements, undocumented variables like
+C<$File::Find::prune>, and more or less humorous oddities like
+insisting on calling the user callback C<wanted> and then writing that
+the subroutine is misnamed, or having both a CAVEAT section containing
+two caveats, followed by a BUGS AND CAVEATS section containing only
+one caveat, and no bugs. I've reported some of them to the Perl bug
+list. I've also submitted a pull request to correct some of the
+problems. Please see there for details if you would like to
+contribute.
 
 =back
 
-File::Find also has various problems with its documentation, some of
-which I have reported to the Perl bug list. I also submitted a pull
-request to correct some of the worst problems. Please see there for
-details.
+=back
 
 [% INCLUDE "author" %]

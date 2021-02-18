@@ -3,7 +3,7 @@ use warnings;
 use strict;
 use Carp;
 use utf8;
-our $VERSION = '0.00_01';
+our $VERSION = '0.00_02';
 
 sub new
 {

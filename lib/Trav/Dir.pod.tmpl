@@ -39,21 +39,44 @@ Traverse directory structure. Replacement for L</File::Find>.
 
     $o->find_files ($dir, \@files);
 
-Traverse C<$dir> and its subdirectories and make a list of files. The
-found files are put into C<@files>. File names are fully qualified,
-which means you get a file name including its directory. You can omit
-the second argument if you want to use a L</callback> instead. If both
-the callback and the files argument are omitted, C<find_files> prints
-a warning and returns, since there is nothing to do.
+Traverse C<$dir> and its subdirectories, and list all the files found
+into C<@files>. File names are fully qualified, in other words the
+file names in C<@files> include the file's directory. 
+
+You can omit the second argument and use a L</callback> instead. 
+
+    my $o = Trav::Dir->new (callback => \& my_function);
+    $o->find_files ($dir);
+
+See L</callback>.
+
+The list of files C<@files> is deliberately not made a return value so
+that you can run C<find_files> over a list of directories.
+
+    for my $dir (@dirs) {
+        $td->find_files ($dir, \@files);
+    }
+
+New files are added to the end of C<@files> using C<push>.
+
+If both C<callback> and C<@files> are omitted, C<find_files> prints a
+warning and returns, since there is nothing to do. You might see this
+warning if you accidentally omit the slash before C<@files> like this:
+
+[% example("forgot-slash") %]
 
 Symbolic links (files which return a true value with the -l test) are
-always skipped.
+not traversed.
+
+"find_files" was originally the name of a subroutine in the script
+which became Trav::Dir.
 
 =head2 new
 
     my $o = Trav::Dir->new (%options);
 
-The options are as follows:
+Create a new Trav::Dir object. There are no mandatory options. The
+options are as follows:
 
 =over
 
@@ -61,7 +84,8 @@ The options are as follows:
 
     Trav::Dir->new (callback => \& call_me);
 
-Callback when file is found. Can be undefined. It is called like this
+A subroutine to call back when each file is found, similar to the
+C<wanted> routine of L</File::Find>. It is called like this
 
     &callback ($data, $file);
 
@@ -86,6 +110,9 @@ Maximum file size to consider. If left undefined it is not used. If
 defined, if the file under consideration is bigger than this, the file
 is skipped. This test is not applied to directories.
 
+This option was implemented to assist file search indexing by
+rejecting very large files.
+
 =item minsize
 
     Trav::Dir->new (minsize => 100_000_000);
@@ -94,12 +121,18 @@ Minimum file size to consider. If left undefined it is not used. If
 defined, if the file under consideration is smaller than this, the
 file is skipped. This test is not applied to directories.
 
+This option was implemented to assist a file search indexing program
+by rejecting very small files.
+
 =item no_dir
 
     Trav::Dir->new (no_dir => 1);
 
 Don't include directories in the results sent to L</callback> or
 included in C<@files>.
+
+This option was implemented to assist a file search indexing program
+by rejecting directories.
 
 =item no_trav
 
@@ -109,11 +142,20 @@ Regex to reject directories to traverse. If a directory matches this
 regex, it is not traversed at all, and its subdirectories are not
 traversed or even seen.
 
+This option was implemented for an incremental backup system to stop
+going into directories containing files which didn't need to be backed
+up, and a file search indexing system for stopping going into
+directories containing files which don't need to be indexed, such as
+computer-generated HTML files or old web server log files.
+
 =item only
 
     Trav::Dir->new (only => qr!.*\.html$!);
 
 Regex to accept only files which match it. 
+
+This option was implemented to assist searching for certain types of
+file.
 
 For example the following script finds files called C<hanzierrorlog>
 under a directory C</mount/backup/incremental/2019>, and then removes
@@ -134,15 +176,18 @@ them when they are found with a callback named C<found>:
 
     Trav::Dir->new (preprocess => \& my_function);
 
-A function which preprocesses a list of files. It is called in the form
+A function which preprocesses the list of files of a directory. It is
+called in the form
 
-     preprocess ($data, $dir, \@files);
+    preprocess ($data, $dir, \@files);
 
 where C<$data> is what is specified with L</data>, C<$dir> is the
 directory of the files, and C<@files> is the list of files in that
 directory.
 
-Trav::Dir does not call L<chdir> but C<@files> are not qualified.
+Trav::Dir does not call C<chdir>, but the file names in C<@files> are
+not qualified, that is they do not contain the directory of the file,
+C<$dir>.
 
 To alter what files are processed, alter the reference you get,
 e.g. to stop processing of the directory use
@@ -151,16 +196,29 @@ e.g. to stop processing of the directory use
 
 This may change in a future version of the module.
 
+This option was implemented as a substitute for the C<preprocess>
+method of L</File::Find> when I replaced its use by use of Trav::Dir,
+for an incremental backup system, to prevent the backup system going
+into directories flagged not to be backed up.
+
 =item rejfile
 
     Trav::Dir->new (rejfile => qr!~$!);
 
-Regex to reject files which don't match it. If a file matches this
-regex it is never sent to the callback specified with L</callback>.
+Regex for rejecting files. If a file matches this regex it is never
+sent to the callback specified with L</callback>.
+
+This is in use for things such as the above example, where C<~> is the
+character used by Emacs editor backups, to prevent old editor backup
+files from being indexed by a search system.
 
 =back
 
 =head1 SEE ALSO
+
+=head2 CPAN
+
+There are lots of similar things on CPAN, including the following:
 
 =over
 
@@ -220,16 +278,30 @@ fully-qualified.
 
 =back
 
+=item L<File::Find::Node>
+
+"Object oriented directory tree traverser"
+
 =item L<File::Find::Object>
+
+=item L<File::Find::Rex>
 
 =item L<File::Find::Rule>
 
 "Alternative interface to File::Find"
 
+It features very comprehensive tests for different kinds of files
+which you can chain together to get lists of files.
+
+=item L<File::Find::utf8>
+
+"Fully UTF-8 aware File::Find"
+
 =item L<File::Finder>
 
-"nice wrapper for File::Find ala find" It writes C<wanted> subroutines
-for File::Find.
+"nice wrapper for File::Find ala find" 
+
+It writes C<wanted> subroutines for File::Find.
 
 =item L<File::Next>
 
@@ -240,5 +312,23 @@ for File::Find.
 =item L<Path::Iterator::Rule>
 
 =back
+
+=head1 HISTORY
+
+Prior to creating this module I was regularly using L</File::Find> and
+I had also used L</File::Find::Rule>, as well as using code such as
+
+    my $pm = `find . -name *.pm`;
+    my @pm = split /\n/, $pm;
+
+The bulk of Trav::Dir's code was taken from scripts written as an
+alternative to either File::Find and friends or the above kinds of
+things. The scripts had been in use for several years in various
+places. The random-looking names of the options to L</new> are just
+the names from the old scripts.
+
+Since starting this module in February 2021, I've been able to replace
+all uses of File::Find, backticks, and the other scripts, with
+Trav::Dir.
 
 [% INCLUDE "author" %]

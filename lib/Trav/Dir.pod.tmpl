@@ -42,9 +42,9 @@ L</File::Find>.
 
 Traverse C<$dir> and its subdirectories, and list all the files found
 into C<@files>. File names are fully qualified, in other words the
-file names in C<@files> include the file's directory. 
+file names in C<@files> include the file's directory.
 
-You can omit the second argument and use a L</callback> instead. 
+You can omit the second argument and use a L</callback> instead.
 
     my $o = Trav::Dir->new (callback => \& my_function);
     $o->find_files ($dir);
@@ -67,7 +67,8 @@ warning if you accidentally omit the slash before C<@files> like this:
 [% example("forgot-slash") %]
 
 Symbolic links (files which return a true value with the -l test) are
-not traversed.
+not traversed or recorded. I have never needed to follow a symbolic
+link when traversing a directory of files.
 
 "find_files" was originally the name of a subroutine in the script
 which became Trav::Dir.
@@ -91,7 +92,7 @@ C<wanted> routine of L</File::Find>. It is called like this
     &callback ($data, $file);
 
 Here C<$file> is the full path of the file and C<$data> is the data
-you pass with L</data>. 
+you pass with L</data>.
 
 Directories are also sent to your callback. If you don't want
 directories, use the L</no_dir> option.
@@ -105,25 +106,31 @@ for the calling conventions.
 
 =item maxsize
 
-    Trav::Dir->new (maxsize => 100_000_000);
+    Trav::Dir->new (maxsize => 200_000);
 
 Maximum file size to consider. If left undefined it is not used. If
 defined, if the file under consideration is bigger than this, the file
 is skipped. This test is not applied to directories.
 
 This option was implemented to assist file search indexing by
-rejecting very large files.
+rejecting very large files. In the file search case the largest text
+file I need to search over is a C file of 118,090 bytes, so I set this
+to 200,000 to quickly reject larger files. Dealing with binary files
+and so on is handled by the callback or by the indexing application
+which uses the list of files.
 
 =item minsize
 
-    Trav::Dir->new (minsize => 100_000_000);
+    Trav::Dir->new (minsize => 10);
 
 Minimum file size to consider. If left undefined it is not used. If
 defined, if the file under consideration is smaller than this, the
 file is skipped. This test is not applied to directories.
 
 This option was implemented to assist a file search indexing program
-by rejecting very small files.
+by rejecting very small files. In the case of the file search it is
+set to 10 so that files with less than 10 bytes are not indexed at
+all.
 
 =item no_dir
 
@@ -145,15 +152,46 @@ traversed or even seen.
 
 This option was implemented for an incremental backup system to stop
 going into directories containing files which didn't need to be backed
-up, and a file search indexing system for stopping going into
-directories containing files which don't need to be indexed, such as
-computer-generated HTML files or old web server log files.
+up, a file search indexing system for stopping going into directories
+containing files which don't need to be indexed, such as
+computer-generated HTML files or old web server log files, and a
+project status checking script which checks whether projects have
+uncommitted changes. For example for the project status checking
+script, the code looks like this:
+
+    my $td = Trav::Dir->new (
+        only => qr!^\.git$!,
+        no_trav => qr!/(?:
+            \.git
+        |
+            bugzilla
+        |
+            cancelled
+        |
+            www
+        |
+            blib
+        |
+            man-pages/man[0-9]
+        )/?$!x,
+    );
+
+To see what projects there are, it looks for a file called F<.git>,
+but to save time it doesn't go into directories like F<.git> or
+F<blib> or some other patterns where there are lots of files we are
+sure are not relevant, and it doesn't go into the cancelled project
+folder since we don't care about those projects.
 
 =item only
 
     Trav::Dir->new (only => qr!.*\.html$!);
 
-Regex to accept only files which match it. 
+Regex to accept only files which match it. This is applied to the file
+name without the directory, so for example if you want to find files
+starting with a pattern like C<apple-touch-icon.*>, you can use C<^>
+to match the beginning of the file name:
+
+    Trav::Dir->new (only => qr!^apple-touch-icon.*!);
 
 This option was implemented to assist searching for certain types of
 file.
@@ -207,7 +245,8 @@ into directories flagged not to be backed up.
     Trav::Dir->new (rejfile => qr!~$!);
 
 Regex for rejecting files. If a file matches this regex it is never
-sent to the callback specified with L</callback>.
+sent to the callback specified with L</callback>. The regex is applied
+to the file without the directory name.
 
 This was implemented for things such as the above example, where C<~>
 is the character used by Emacs editor backups, to prevent old editor
@@ -233,7 +272,7 @@ and making a list of files.
 =item L<File::Find>
 
 This is a Perl version of the Unix "find" utility. It is part of the
-Perl core so is installed with Perl by default. 
+Perl core so is installed with Perl by default.
 
 =back
 
@@ -317,7 +356,7 @@ These help you to use L</File::Find>.
 
 =item L<File::Finder>
 
-"nice wrapper for File::Find ala find" 
+"nice wrapper for File::Find ala find"
 
 It writes C<wanted> subroutines for File::Find.
 
@@ -337,11 +376,37 @@ It writes C<wanted> subroutines for File::Find.
 
 =item L<File::Find::Random>
 
-The documentation doesn't make it very clear what this does.
+The documentation doesn't make it very clear what this does. To get a
+random file using Trav::Dir, try the following:
+
+[% example("random-file") %]
 
 =back
 
 =back
+
+=head2 Other ways to do the same thing
+
+If you need to find a file with a certain name, on a Unix system, the
+C<find> facility may be useful, as is the C<locate> facility. For
+example to find all "coredumps", one can use
+
+    my @core = `locate ".core"`;
+
+C<locate> is usually run at certain times of the day by the operating
+system so it is not necessarily completely up to date. 
+
+C<grep> can be quite handy too to eliminate bad patterns. In my case I
+have a giant number of files under an incremental backup directory, so
+I use
+
+    my @junk = `locate guff | grep -v incremental`;
+    for my $file (@junk) {
+        chomp $file;
+        print "$file\n";
+    }
+
+to find files with the letters "guff" in their names.
 
 =head1 HISTORY
 
@@ -381,7 +446,7 @@ statements, undocumented variables like C<$File::Find::prune>, and
 oddities like calling the user callback C<wanted> and then writing
 that the subroutine is misnamed, or having both a CAVEAT section
 containing two caveats, followed by a BUGS AND CAVEATS section
-containing only one caveat, and no bugs. 
+containing only one caveat, and no bugs.
 
 I've reported some of them to the Perl bug list. I've also submitted a
 pull request to correct some of the problems. Please see there for
@@ -391,6 +456,11 @@ details if you would like to contribute.
 
 Trav::Dir does not call chdir. All returned file names are
 fully-qualified.
+
+=item No support for symbolic links
+
+Trav::Dir does not support following symbolic links. This avoids
+having to make any number of contortions.
 
 =back
 

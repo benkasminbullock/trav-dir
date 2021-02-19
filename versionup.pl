@@ -11,7 +11,7 @@ my $newversion = '0.01';
 my $version = '0.00_02';
 
 my @pmfiles = qw!
-lib/Trav/Dir.pm
+    lib/Trav/Dir.pm
 !;
 versionup ($Bin, \@pmfiles, $version, $newversion);
 

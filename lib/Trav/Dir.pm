@@ -5,57 +5,28 @@ use Carp;
 use utf8;
 our $VERSION = '0.01';
 
+sub op
+{
+    my ($o, $options, $name) = @_;
+    if ($options->{$name}) {
+	$o->{$name} = $options->{$name};
+	delete $options->{$name};
+    }
+}
+
 sub new
 {
-    my ($class, %options) = @_;
-    my $o;
-    if ($options{verbose}) {
-	$o->{verbose} = $options{verbose};
-	delete $options{verbose};
-    }
-    if ($options{rejfile}) {
-	$o->{rejfile} = $options{rejfile};
-	delete $options{rejfile};
-    }
-    if ($options{no_trav}) {
-	$o->{no_trav} = $options{no_trav};
-	delete $options{no_trav};
-    }
+    my ($class, %op) = @_;
+    my $o = {};
     $o->{minsize} = 0;
-    if ($options{minsize}) {
-	$o->{minsize} = $options{minsize};
-	delete $options{minsize};
-	$o->{size} = 1;
-    }
     $o->{maxsize} = 'inf';
-    if ($options{maxsize}) {
-	$o->{maxsize} = $options{maxsize};
-	delete $options{maxsize};
-	$o->{size} = 1;
+    for my $name (qw!verbose rejfile no_trav minsize maxsize
+		     only callback no_dir data preprocess!) {
+	op ($o, \%op, $name);
     }
-    if ($options{only}) {
-	$o->{only} = $options{only};
-	delete $options{only};
-    }
-    if ($options{callback}) {
-	$o->{callback} = $options{callback};
-	delete $options{callback};
-    }
-    if ($options{no_dir}) {
-	$o->{no_dir} = $options{no_dir};
-	delete $options{no_dir};
-    }
-    if ($options{data}) {
-	$o->{data} = $options{data};
-	delete $options{data};
-    }
-    if ($options{preprocess}) {
-	$o->{preprocess} = $options{preprocess};
-	delete $options{preprocess};
-    }
-    for my $k (keys %options) {
+    for my $k (keys %op) {
 	carp "Unknown option $k";
-	delete $options{$k};
+	delete $op{$k};
     }
     bless $o, $class;
 }

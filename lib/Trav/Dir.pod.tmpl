@@ -31,7 +31,8 @@ corresponding to L<git commit [% commit.commit %]|[% info.repo
 
 =head1 DESCRIPTION
 
-Traverse directory structure. Replacement for L</File::Find>.
+Traverse directories and make a list of files. Replacement for
+L</File::Find>.
 
 =head1 METHODS
 
@@ -208,9 +209,15 @@ into directories flagged not to be backed up.
 Regex for rejecting files. If a file matches this regex it is never
 sent to the callback specified with L</callback>.
 
-This is in use for things such as the above example, where C<~> is the
-character used by Emacs editor backups, to prevent old editor backup
-files from being indexed by a search system.
+This was implemented for things such as the above example, where C<~>
+is the character used by Emacs editor backups, to prevent old editor
+backup files from being indexed by a search system.
+
+=item verbose
+
+    Trav::Dir->new (verbose => 1);
+
+Print a lot of messages about how the files are being processed.
 
 =back
 
@@ -218,19 +225,128 @@ files from being indexed by a search system.
 
 =head2 CPAN
 
-There are lots of similar things on CPAN, including the following:
+There are a number of other CPAN modules for going into directories
+and making a list of files.
 
 =over
-
-=item L<File::chdir::WalkDir>
 
 =item L<File::Find>
 
 This is a Perl version of the Unix "find" utility. It is part of the
 Perl core so is installed with Perl by default. 
 
-Trav::Dir was created as an alternative to this with the following
-merits:
+=back
+
+=over
+
+=item Alternatives to File::Find
+
+These modules offer alternatives to File::Find but are not based on it.
+
+=over
+
+=item L<File::chdir::WalkDir>
+
+=item L<File::Find::Declare>
+
+Moose-based
+
+=item L<File::Find::Node>
+
+"Object oriented directory tree traverser"
+
+=item L<File::Find::Object>
+
+"An object oriented File::Find replacement"
+
+=item L<File::Next>
+
+=item L<Path::Class::Iterator>
+
+"walk a directory structure"
+
+=item L<Path::Class::Rule>
+
+"Iterative, recursive file finder with Path::Class"
+
+=item L<Path::Iterator::Rule>
+
+=back
+
+=item File::Find extensions
+
+These extend L</File::Find> in various ways.
+
+=over
+
+=item L<File::Find::CaseCollide>
+
+"find collisions in filenames, differing only in case"
+
+=item L<File::Find::Duplicates>
+
+=item L<File::Find::Rex>
+
+"Combines simpler File::Find interface with support for regular
+expression search criteria."
+
+=item L<File::Find::Rule>
+
+"Alternative interface to File::Find"
+
+It features very comprehensive tests for different kinds of files
+which you can chain together to get lists of files.
+
+=item L<File::Find::utf8>
+
+"Fully UTF-8 aware File::Find"
+
+It forces the file names from bytes to characters.
+
+=back
+
+=item File::Find assistants
+
+These help you to use L</File::Find>.
+
+=over
+
+=item L<File::Find::Closures>
+
+"functions you can use with File::Find"
+
+=item L<File::Finder>
+
+"nice wrapper for File::Find ala find" 
+
+It writes C<wanted> subroutines for File::Find.
+
+=item L<File::Find::Wanted>
+
+"More obvious wrapper around File::Find"
+
+=back
+
+=item Other
+
+=over
+
+=item L<File::Find::Match>
+
+"Perform different actions on files based on file name."
+
+=item L<File::Find::Random>
+
+The documentation doesn't make it very clear what this does.
+
+=back
+
+=back
+
+=head1 HISTORY
+
+Trav::Dir was created as an alternative to L</File::Find> with the
+following merits:
 
 =over
 
@@ -260,16 +376,16 @@ directories and file names.
 
 =item Documentation
 
-File::Find has various more or less serious problems with its
-documentation, including wrong statements, undocumented variables like
-C<$File::Find::prune>, and more or less humorous oddities like
-insisting on calling the user callback C<wanted> and then writing that
-the subroutine is misnamed, or having both a CAVEAT section containing
-two caveats, followed by a BUGS AND CAVEATS section containing only
-one caveat, and no bugs. I've reported some of them to the Perl bug
-list. I've also submitted a pull request to correct some of the
-problems. Please see there for details if you would like to
-contribute.
+File::Find has problems with its documentation including wrong
+statements, undocumented variables like C<$File::Find::prune>, and
+oddities like calling the user callback C<wanted> and then writing
+that the subroutine is misnamed, or having both a CAVEAT section
+containing two caveats, followed by a BUGS AND CAVEATS section
+containing only one caveat, and no bugs. 
+
+I've reported some of them to the Perl bug list. I've also submitted a
+pull request to correct some of the problems. Please see there for
+details if you would like to contribute.
 
 =item Does not call chdir
 
@@ -277,43 +393,6 @@ Trav::Dir does not call chdir. All returned file names are
 fully-qualified.
 
 =back
-
-=item L<File::Find::Node>
-
-"Object oriented directory tree traverser"
-
-=item L<File::Find::Object>
-
-=item L<File::Find::Rex>
-
-=item L<File::Find::Rule>
-
-"Alternative interface to File::Find"
-
-It features very comprehensive tests for different kinds of files
-which you can chain together to get lists of files.
-
-=item L<File::Find::utf8>
-
-"Fully UTF-8 aware File::Find"
-
-=item L<File::Finder>
-
-"nice wrapper for File::Find ala find" 
-
-It writes C<wanted> subroutines for File::Find.
-
-=item L<File::Next>
-
-=item L<Path::Class::Iterator>
-
-=item L<Path::Class::Rule>
-
-=item L<Path::Iterator::Rule>
-
-=back
-
-=head1 HISTORY
 
 Prior to creating this module I was regularly using L</File::Find> and
 I had also used L</File::Find::Rule>, as well as using code such as

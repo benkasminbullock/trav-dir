@@ -3,7 +3,7 @@ use warnings;
 use strict;
 use Carp;
 use utf8;
-our $VERSION = '0.00_02';
+our $VERSION = '0.01';
 
 sub new
 {
@@ -125,10 +125,6 @@ sub find_files
 		next;
 	    }
 	}
-	#	my $safe = $dfile;
-	#	$safe =~ s![^[:print:]]!XX!g;
-	#	print "$safe\n";
-
 	if (! $o->{only} || $file =~ $o->{only}) {
 	    $o->save ($dfile, $f);
 	}

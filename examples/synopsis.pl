@@ -4,16 +4,16 @@ use strict;
 use FindBin '$Bin';
 use Trav::Dir;
 my $o = Trav::Dir->new (
-    # Don't traverse these directories
+    # Don't traverse directories matching these patterns
     no_trav => qr!/(\.git|xt|blib)$!,
-    # Reject these files
+    # Reject files matching this pattern
     rejfile => qr!~$|MYMETA|\.tar\.gz!,
+    # Don't add directories to @files
+    no_dir => 1,
 );
 my @files;
 chdir "$Bin/..";
 $o->find_files (".", \@files);
-for (@files) {
-    if (-f $_) {
-	print "$_\n";
-    }
+for (sort @files) {
+    print "$_\n";
 }

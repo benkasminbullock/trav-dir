@@ -17,7 +17,7 @@ This method was added in version [% version %] of the module.
 
 =head1 NAME
 
-[% info.colon %] - Traverse directories
+[% info.colon %] - Practical traversing of directories
 
 =head1 SYNOPSIS
 
@@ -41,10 +41,17 @@ L</File::Find>.
     $o->find_files ($dir, \@files);
 
 Traverse C<$dir> and its subdirectories, and list all the files found
-into C<@files>. File names are fully qualified, in other words the
-file names in C<@files> include the file's directory.
+into C<@files>. find_files first makes a list of the files in C<$dir>,
+then it goes through the list and recursively calls itself on
+directories, and then stores the files into C<@files>. If the user
+provides a callback in L</new>, it also calls the user callback on
+each file.
 
-You can omit the second argument and use a L</callback> instead.
+File names are fully qualified, in other words the file names in
+C<@files> include the file's directory.
+
+You can omit the second argument, C<@files>, and just use a
+L</callback> instead.
 
     my $o = Trav::Dir->new (callback => \& my_function);
     $o->find_files ($dir);
@@ -67,8 +74,8 @@ warning if you accidentally omit the slash before C<@files> like this:
 [% example("forgot-slash") %]
 
 Symbolic links (files which return a true value with the -l test) are
-not traversed or recorded. I have never needed to follow a symbolic
-link when traversing a directory of files.
+not traversed or recorded. See L</No support for symbolic links> for a
+discussion.
 
 "find_files" was originally the name of a subroutine in the script
 which became Trav::Dir.
@@ -180,7 +187,8 @@ To see what projects there are, it looks for a file called F<.git>,
 but to save time it doesn't go into directories like F<.git> or
 F<blib> or some other patterns where there are lots of files we are
 sure are not relevant, and it doesn't go into the cancelled project
-folder since we don't care about those projects.
+directory, since we don't care about whether those projects are up to
+date.
 
 =item only
 
@@ -410,22 +418,37 @@ to find files with the letters "guff" in their names.
 
 =head1 HISTORY
 
-Trav::Dir was created as an alternative to L</File::Find> with the
-following merits:
+Trav::Dir was created as an alternative to L</File::Find> and the
+other modules on CPAN. I very strongly disliked File::Find for quite a
+long time, but also found the alternatives like File::Find::Rule
+excessively complicated, so I would end up writing various scripts to
+traverse directories, leading to duplication of efforts. I eventually
+decided not to write any more duplicate code but make a single module
+which would serve a practical purpose.
+
+In my opinion this module has the following merits:
 
 =over
 
 =item No need for closures or global variables
+
+There are all kinds of articles, stackoverflow, and perlmonks
+questions, and L<several CPAN modules|/File::Find assistants> about
+how to write closures and C<wanted> functions for File::Find, but
+these are working around a deficiency of the module.
 
 Trav::Dir eliminates the need for closures or global variables by
 allowing the user to supply a L</data> argument to L</new>.
 
 =item No pseudo-global variables
 
-File::Find communicates with the user routine it calls C<wanted> using
-various pseudo-global variables like C<$File::Find::name>. Trav::Dir
-uses standard Perl subroutine arguments in callbacks. See L</callback>
-and L</preprocess>.
+For some reason or another, File::Find communicates with the user
+routine it calls C<wanted> using various pseudo-global variables like
+C<$File::Find::name>. These are annoying to repeatedly type and are
+also completely unnecessary. 
+
+Trav::Dir uses standard Perl subroutine arguments in callbacks. See
+L</callback> and L</preprocess>.
 
 =item Pattern-matching
 
@@ -433,34 +456,61 @@ File::Find has no facility to match directories or files against
 patterns.  Instead each and every directory and file must be handled
 by a user callback, and the user callback must interact with
 File::Find using lengthy fully-qualified arguments like
-C<$File::Find::prune>.
+C<$File::Find::prune>. Stopping File::Find from wading through
+unwanted directories requires the user to write lots of annoying,
+fiddly code involving closures and global variables and File::Find's
+silly C<$File::Find::*> pseudo-global variables, to prevent it from
+doing so.
 
 Trav::Dir greatly simplifies the selection of files by allowing regex
 arguments like L</no_trav>, L</only> and L</rejfile> to sort through
-directories and file names.
+directories and file names. 
+
+=item Does not call chdir
+
+File::Find insists on doing chdir into each and every directory it
+examines. In practice it is very rare that one actually needs to
+change into a directory.
+
+Trav::Dir does not call chdir. The file name passed to the callback is
+fully-qualified. It is a very simple matter to remove the directory
+from the file name if necessary.
+
+=item No support for symbolic links
+
+Quite a large chunk of File::Find's documentation is about its endless
+ways of handling symbolic links, and yet it is very rare that one
+needs to do this task.
+
+Trav::Dir avoids having to make any number of contortions by not
+following symbolic links. I have never needed to follow a symbolic
+link when traversing a directory of files.
+
+=item No needless complexity
+
+In designing this module I've made something which does the practical
+task of going through directories and looking at the files.  In the
+rare cases that a complicated task such as sorting the list of files
+before examining them, checking file permissions, or postprocessing a
+directory needs to be carried out, it can be handled by the callback
+function, so I deliberately haven't included complex facilities like
+the extraordinarily complicated handling of symbolic links in
+File::Find, or the huge number of rules in L</File::Find::Rule>. All
+of these things can be done much more simply and without reinventing
+the wheel by writing a suitable callback function.
 
 =item Documentation
 
-File::Find has problems with its documentation including wrong
-statements, undocumented variables like C<$File::Find::prune>, and
-oddities like calling the user callback C<wanted> and then writing
-that the subroutine is misnamed, or having both a CAVEAT section
-containing two caveats, followed by a BUGS AND CAVEATS section
-containing only one caveat, and no bugs.
+File::Find's documentation includes wrong statements, undocumented
+variables like C<$File::Find::prune>, and oddities like calling the
+user callback C<wanted> and then writing that the subroutine is
+misnamed, or having both a CAVEAT section containing two caveats,
+followed by a BUGS AND CAVEATS section containing only one caveat, and
+no bugs.
 
 I've reported some of them to the Perl bug list. I've also submitted a
 pull request to correct some of the problems. Please see there for
 details if you would like to contribute.
-
-=item Does not call chdir
-
-Trav::Dir does not call chdir. All returned file names are
-fully-qualified.
-
-=item No support for symbolic links
-
-Trav::Dir does not support following symbolic links. This avoids
-having to make any number of contortions.
 
 =back
 

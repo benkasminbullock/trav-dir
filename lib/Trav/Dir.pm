@@ -3,7 +3,7 @@ use warnings;
 use strict;
 use Carp;
 use utf8;
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 sub op
 {
@@ -20,9 +20,25 @@ sub new
     my $o = {};
     $o->{minsize} = 0;
     $o->{maxsize} = 'inf';
-    for my $name (qw!verbose rejfile no_trav minsize maxsize
-		     only callback no_dir data preprocess!) {
+    for my $name (qw!
+	verbose
+
+	callback
+	data
+	maxsize
+	minsize
+	no_dir
+	no_trav
+	only
+	preprocess
+	rejfile
+    !) {
 	op ($o, \%op, $name);
+    }
+    # $o->{size} is a flag which tells find_files whether to check the
+    # size.
+    if ($o->{minsize} || $o->{maxsize}) {
+	$o->{size} = 1;
     }
     for my $k (keys %op) {
 	carp "Unknown option $k";

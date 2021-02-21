@@ -7,8 +7,8 @@ use Z;
 use Perl::Build 'versionup';
 use Deploy 'make_date';
 
-my $newversion = '0.01';
-my $version = '0.00_02';
+my $newversion = '0.02';
+my $version = '0.01';
 
 my @pmfiles = qw!
     lib/Trav/Dir.pm
